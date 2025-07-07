@@ -340,6 +340,12 @@ const App = () => {
       position: 'relative',
       fontFamily: 'Inter, sans-serif' // Apply font globally
     }}>
+      <style>
+        {
+          `.js-plotly-plot .slice {
+            cursor: pointer;}`
+        }
+      </style>
       <h1 style={{
         fontSize: '1.875rem', // text-3xl
         fontWeight: 'bold',
