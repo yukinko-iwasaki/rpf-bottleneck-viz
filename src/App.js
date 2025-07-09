@@ -113,6 +113,7 @@ const App = () => {
       breadcrumbs.unshift(currentNode.label);
       currentNode = nodeInfo[currentNode.parentId];
     }
+    breadcrumbs.unshift("PRM Roles"); // Add the root label at the start
     return breadcrumbs;
   };
 
@@ -424,10 +425,11 @@ const App = () => {
       <div style={{
         display: 'flex',
         gap: '0.5rem',
+        paddingLeft: '1rem',
         marginBottom: '1.5rem',
         flexWrap: 'wrap',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'start',
         background: '#fafbfc', // more white background
         borderRadius: '0.5rem',
         boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
@@ -438,38 +440,43 @@ const App = () => {
         marginRight: 'auto',
       }}>
         {breadcrumbs.map((crumb, idx) => {
-          let bgColor = '#FFFFFF';
-          if (idx <= 3) {
-            const LAYER_COLORS = ['#FF848B','#4D9FD3','#C742B3']
-            bgColor = LAYER_COLORS[idx];
+          let bgColor = '';
+          if (idx > 0 && idx <= 3) {
+            const LAYER_COLORS = ['rgb(255, 132, 139, 0.3)','rgb(77, 159, 211, 0.3)']
+            bgColor = LAYER_COLORS[idx-1];
+          }
+          let text = crumb;
+          if (idx === 1){
+            text = "Role: " + crumb;
+          }else if (idx === 2) {
+            text = "Challenge: " + crumb;
           }
           return (
             <React.Fragment key={idx}>
               <div
                 style={{
                   background: bgColor,
-                  color: idx === 0 ? '#222' : '#fff',
+                  color: idx === 0 ?' grey' : 'black',
                   padding: '0.4rem 1rem',
                   borderRadius: '0.5rem',
                   fontWeight: 600,
-                  fontSize: '1rem',
-                  boxShadow: '0 1px 4px rgba(0,0,0,0.07)',
-                  border: idx === breadcrumbs.length-1 ? '2px solid #222' : 'none',
+                  fontSize: '0.7rem',
+                  boxShadow: 'rgba(0, 0, 0, 0.07) 4px 4px 4px;',
                   opacity: idx === breadcrumbs.length-1 ? 1 : 0.85,
                   transition: 'background 0.2s',
                   cursor: 'default',
                   display: 'inline-block',
                 }}
               >
-                {crumb}
+                <span>{text}</span>
               </div>
               {idx < breadcrumbs.length - 1 && (
                 <span style={{
-                  color: '#222', // darker for visibility
+                  color: 'grey', // darker for visibility
                   fontWeight: 900,
-                  fontSize: '2rem', // larger
-                  margin: '0 0.5rem', // more spacing
+                  fontSize: '1rem', // larger
                   userSelect: 'none',
+                  opacity: 0.7,
                   verticalAlign: 'middle',
                   display: 'inline-block',
                   lineHeight: 1,
