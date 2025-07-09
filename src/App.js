@@ -6,22 +6,22 @@ const App = () => {
   // Raw hierarchical data structure based on the user's input
   const rawDataTree = {
     "Role of Public Finance": {
-      "Commitment to Feasible Policy": {
-        "Insufficient Stakeholder Commitment to Policy Action": [
+      "A. Commitment to Feasible Policy": {
+        "1. Insufficient Stakeholder Commitment to Policy Action": [
           "Inadequate commitment of political and technical leadership to policy action and associated resource mobilization and use within or across sectors",
           "Inadequately broad-based stakeholder involvement, understanding and support for policy action and associated resource mobilization and use"
         ],
-        "Incoherence and fragmentation of policy": [
+        "2. Incoherence and fragmentation of policy": [
           "Fragmented, inconsistent and uncoordinated policies across or within sectors",
         ],
-        "Mismatch between policy goals, capability and resources": [
+        "3. Mismatch between policy goals, capability and resources": [
           "Domestic revenue policies generate insufficient resources to achieve policy goals given fiscal reality",
           "Public policy goals are unaffordable given costs and fiscal reality",
           "Policies do not take into account the available organizational capability to achieve goals",
         ]
       },
-      "Fiscal sustainability": {
-        "Unsustainable fiscal situation of governments and organizations": [
+      "B. Fiscal sustainability": {
+        "4. Unsustainable fiscal situation of governments and organizations": [
         "Short term biases lead to pro-cyclical spending and force deep cuts during downturns",
         "Biased or inaccurate fiscal forecasting and unpredictable, volatile resource flows result in budgets being under-funded",
           "Un-strategic, ad hoc and supply driven debt management undermines fiscal consolidation and reduces fiscal space",
@@ -29,33 +29,33 @@ const App = () => {
           "Financial unviability of providers and utilities",
         ]
       },
-      "Effective Resource Mobilization & Distribution": {
-        "Inadequate and inequitable resources mobilized and deployed for policy implementation": [
+      "C. Effective Resource Mobilization & Distribution": {
+        "5. Inadequate and inequitable resources mobilized and deployed for policy implementation": [
         "Limited or costly financing mobilized for public Investment and service delivery",
           "Resource deployment is often incremental and disconnected from public policy priorities",
           "Resource deployment is not informed by demand or costs of achieving public policy objectives",
           "Unequal and inequitable resource mobilization and distribution, misaligned with policy and effective delivery",
         ],
-        "Unreliable, delayed and fragmented funding for delivery": [
+        "6.Unreliable, delayed and fragmented funding for delivery": [
         "Ad hoc, political and fragmented funding channels contributes to ineffective and inefficient delivery",
           "Shortfalls, delays and diversion of funding for delivery",
         ],
-        "Inefficient deployment and management of resources and inputs for delivery": [
-        "Inefficient public investment decisions and management of assets",
+      },
+      "D. Performance & Accountability in Delivery": {
+        "7. Inefficient deployment and management of resources and inputs for delivery": [
+          "Inefficient public investment decisions and management of assets",
           "Inefficient deployment and poor motivation and inadequate skills of frontline and other staff",
           "Limited availability of operational resources relative to salaries and delivery infrastructure",
           "Delays in and inflated cost of procurement for infrastructure and operational inputs",
           "Weak management of resources at national and subnational levels up to the point of delivery"
-        ]
-      },
-      "Performance & Accountability in Delivery": {
-        "Incentives, management oversight, and accountability systems and institutions fail to enable and encourage performance as intended": [
+        ],
+          "8. Incentives, management oversight, and accountability systems and institutions fail to enable and encourage performance as intended": [
           "The design of regulatory, incentive, control and management systems limits autonomy and discourages performance",
           "Non-compliance and weak enforcement of regulatory, PFM and public sector management systems undermines performance and accountability",
           "Weaknesses in fiscal governance undermine public and private investment and action",
           "Inadequate oversight, monitoring, evaluation and accountability for resources and performance"
         ],
-        "Inadequate use of fragmented sector and financial data in decision making for policy and delivery.": [
+        "9. Inadequate use of fragmented sector and financial data in decision making for policy and delivery.": [
           "Available financial and non-financial information not used for decision making, management and accountability",
           "Data systems are fragmented and do not interoperate"
         ]
@@ -72,6 +72,7 @@ const App = () => {
   // States for managing the pop-out table
   const [showPopoutTable, setShowPopoutTable] = useState(false);
   const [popoutTableRows, setPopoutTableRows] = useState([]);
+  const [breadcrumbs, setBreadcrumbs] = useState([]); // State to hold breadcrumbs
 
   // Ref to store the Plotly.js graphDiv for event handling
   const graphDivRef = useRef(null);
@@ -104,6 +105,25 @@ const App = () => {
     });
     return wrappedText;
   };
+
+  const getBreadCrumbs = (nodeInfo, currentId) => {
+    const breadcrumbs = [];
+    let currentNode = nodeInfo[currentId];
+    while (currentNode.depth > 0) {
+      breadcrumbs.unshift(currentNode.label);
+      currentNode = nodeInfo[currentNode.parentId];
+    }
+    return breadcrumbs;
+  };
+
+  useEffect(() => {
+    // Update breadcrumbs whenever currentLevelId changes
+    if (transformedData.nodeInfo && currentLevelId) {
+      const breadcrumbs = getBreadCrumbs(transformedData.nodeInfo, currentLevelId);
+      // Update the breadcrumbs display (you can set this in state or directly manipulate the DOM)
+      setBreadcrumbs(breadcrumbs);
+    }
+  }, [currentLevelId]); // Run this effect when nodeInfo or currentLevelId changes
 
   /**
    * Generates an array of sample text strings for table rows.
@@ -139,86 +159,25 @@ const App = () => {
     const colors = [];
     const nodeValues = {};
     const nodeInfo = {};
-    const textColors = []; // This will hold text colors if needed
+    const textColors = [];
     let idCounter = 0;
     const idMap = new Map();
 
     const TEXT_WRAP_MAX_LENGTH = 25;
 
-    // Define color palettes for each main challenge group
-    const COLOR_PALETTES_BY_GROUP = {
-      "Role of Public Finance": {
-        level0: '#FFFFFF'
-      },
-      "Commitment to Feasible Policy": { // New top-level group
-        level1: '#F84B64', // Purple
-        level2: '#C9E7F8', // Lighter Purple
-        level3: '#D2B4DE'  // Even Lighter Purple
-      },
-      "Insufficient Stakeholder Commitment to Policy Action": {
-        level1: 'FF848B', // Purple (fallback if not nested)
-        level2: '#C9E7F8', // Lighter Purple (fallback)
-        level3: '#D2B4DE'  // Even Lighter Purple (fallback)
-      },
-      "Incoherence and fragmentation of policy": {
-        level1: '#f84b64', // Purple (fallback if not nested)
-        level2: '#C9E7F8', // Lighter Purple (fallback)
-        level3: '#D2B4DE'  // Even Lighter Purple (fallback)
-      },
-      "Mismatch between policy goals, capability and resources": {
-        level1: '#d24989', // Purple (fallback if not nested)
-        level2: '#C9E7F8', // Lighter Purple (fallback)
-        level3: '#D2B4DE'  // Even Lighter Purple (fallback)
-      },
-      "Fiscal sustainability": {
-        level1: '#F84B64', // Dark Red
-        level2: '#C9E7F8', // Red
-        level3: '#F1948A'  // Light Red
-      },
-      "Unsustainable fiscal situation of governments and organizations": {
-        level1: '#C0392B', // Dark Red (fallback)
-        level2: '#C9E7F8', // Red (fallback)
-        level3: '#F1948A'  // Light Red (fallback)
-      },
-      "Effective Resource Mobilization & Distribution": {
-        level1: 'FF848B', // Dark Green
-        level2: '#C9E7F8', // Green
-        level3: '#A9DFBF'  // Light Green
-      },
-      "Inadequate and inequitable resources mobilized and deployed for policy implementation": {
-        level1: '#27AE60', // Dark Green (fallback)
-        level2: '#C9E7F8', // Green (fallback)
-        level3: '#A9DFBF'  // Light Green (fallback)
-      },
-      "Unreliable, delayed and fragmented funding for delivery": {
-        level1: '#27AE60', // Dark Green (fallback)
-        level2: '#C9E7F8', // Green (fallback)
-        level3: '#A9DFBF'  // Light Green (fallback)
-      },
-      "Inefficient deployment and management of resources and inputs for delivery": {
-        level1: '#27AE60', // Dark Green (fallback)
-        level2: '#C9E7F8', // Green (fallback)
-        level3: '#A9DFBF'  // Light Green (fallback)
-      },
-      "Performance & Accountability in Delivery": {
-        level1: 'FF848B', // Dark Blue
-        level2: '#C9E7F8', // Blue
-        level3: '#85C1E9'  // Light Blue
-      },
-      "Incentives, management oversight, and accountability systems and institutions fail to enable and encourage performance as intended": {
-        level1: '#2980B9', // Dark Blue (fallback)
-        level2: '#C9E7F8', // Blue (fallback)
-        level3: '#85C1E9'  // Light Blue (fallback)
-      },
-      "Inadequate use of fragmented sector and financial data in decision making for policy and delivery.": {
-        level1: '#2980B9', // Dark Blue (fallback)
-        level2: '#C9E7F8', // Blue (fallback)
-        level3: '#85C1E9'  // Light Blue (fallback)
-      }
-    };
+    // Alternating color palettes for each layer
+    const LAYER_COLORS = [
+      ['#FF848B', '#F84B64'], // 1st layer
+      ['#C9E7F8', '#4D9FD3'], // 2nd layer
+      ['#C742B3', '#D1BACE']  // 3rd layer
+    ];
 
-    // Keep track of the top-level challenge for color assignment
-    const nodeGroupColor = {};
+    // Helper to get alternating color for a given layer and index
+    const getAltColor = (depth, idx) => {
+      if (depth === 0) return '#FFFFFF'; // Root always white
+      if (depth > 3) return '#CCCCCC'; // Fallback for deeper layers
+      return LAYER_COLORS[depth - 1][idx % 2];
+    };
 
     const generateUniqueId = (label) => {
       if (idMap.has(label)) {
@@ -229,55 +188,74 @@ const App = () => {
       return newId;
     };
 
-    const addNode = (label, parentId, initialValue, depth, color) => {
-      const id = generateUniqueId(label);
-      ids.push(id);
-      labels.push(wrapText(label, TEXT_WRAP_MAX_LENGTH));
-      parents.push(parentId);
-      values.push(initialValue);
-      colors.push(color);
-      const textColor = ['#F84B64', 'FF848B'].includes(color)? '#FFFFFF' : 'black'; // Use white text for pink, black for others
-      textColors.push(textColor)
-      nodeValues[id] = initialValue;
-      nodeInfo[id] = { label, parentId, depth, children: [] };
-
-      if (parentId) {
-        if (nodeInfo[parentId]) {
-          nodeInfo[parentId].children.push(id);
-        }
-      }
-      return id;
-    };
+    // Track index for alternating colors at each layer
+    const layerIndices = [0, 0, 0, 0];
 
     // Add the root node: "Role of Public Finance" (Depth 0)
     const rootLabel = Object.keys(dataTree)[0];
-    const rootId = addNode(rootLabel, '', 0, 0, COLOR_PALETTES_BY_GROUP[rootLabel].level0);
+    const rootId = generateUniqueId(rootLabel);
+    ids.push(rootId);
+    labels.push(wrapText(rootLabel, TEXT_WRAP_MAX_LENGTH));
+    parents.push('');
+    values.push(0);
+    colors.push(getAltColor(0, 0));
+    textColors.push('black');
+    nodeValues[rootId] = 0;
+    nodeInfo[rootId] = { label: rootLabel, parentId: '', depth: 0, children: [] };
 
-    // Iterate through the first level (e.g., "Commitment to Feasible Policy", "Fiscal sustainability" - Depth 1)
+    // 1st layer
+    let l1idx = 0;
+    let l2globalIdx = 0; // Global counter for 2nd layer
     for (const level1Label in dataTree[rootLabel]) {
-      const level1Color = COLOR_PALETTES_BY_GROUP[level1Label].level1;
-      const level1Id = addNode(level1Label, rootId, 0, 1, level1Color);
-      nodeGroupColor[level1Id] = level1Label; // Store the group name for children
+      const level1Id = generateUniqueId(level1Label);
+      ids.push(level1Id);
+      labels.push(wrapText(level1Label, TEXT_WRAP_MAX_LENGTH));
+      parents.push(rootId);
+      values.push(0);
+      const l1color = getAltColor(1, l1idx);
+      colors.push(l1color);
+      textColors.push('#FFFFFF');
+      nodeValues[level1Id] = 0;
+      nodeInfo[level1Id] = { label: level1Label, parentId: rootId, depth: 1, children: [] };
+      nodeInfo[rootId].children.push(level1Id);
 
-      // Iterate through the second level (e.g., "Insufficient Stakeholder Commitment to Policy Action", "Unsustainable fiscal situation of governments and organizations" - Depth 2)
+      // 2nd layer
       for (const level2Label in dataTree[rootLabel][level1Label]) {
-        const level2Color = COLOR_PALETTES_BY_GROUP[nodeGroupColor[level1Id]].level2;
-        const level2Id = addNode(level2Label, level1Id, 0, 2, level2Color);
-        nodeGroupColor[level2Id] = nodeGroupColor[level1Id]; // Pass group name to children
+        const level2Id = generateUniqueId(level2Label);
+        ids.push(level2Id);
+        labels.push(wrapText(level2Label, TEXT_WRAP_MAX_LENGTH));
+        parents.push(level1Id);
+        values.push(0);
+        const l2color = getAltColor(2, l2globalIdx);
+        colors.push(l2color);
+        textColors.push('black');
+        nodeValues[level2Id] = 0;
+        nodeInfo[level2Id] = { label: level2Label, parentId: level1Id, depth: 2, children: [] };
+        nodeInfo[level1Id].children.push(level2Id);
 
+        // 3rd layer (leaf nodes)
+        let l3idx = 0;
         const policies = dataTree[rootLabel][level1Label][level2Label];
         policies.forEach(policyLabel => {
-          // Get color from the bottleneck's group palette for level3
-          const policyColor = COLOR_PALETTES_BY_GROUP[nodeGroupColor[level2Id]].level3;
-          const policyId = addNode(policyLabel, level2Id, 1, 3, policyColor); // Leaf node has a value of 1
-          // Sum up values for parent (level2)
-          nodeValues[level2Id] = (nodeValues[level2Id] || 0) + nodeValues[policyId];
+          const policyId = generateUniqueId(policyLabel);
+          ids.push(policyId);
+          labels.push(wrapText(policyLabel, TEXT_WRAP_MAX_LENGTH));
+          parents.push(level2Id);
+          values.push(1);
+          const l3color = getAltColor(3, l3idx);
+          colors.push(l3color);
+          textColors.push('black');
+          nodeValues[policyId] = 1;
+          nodeInfo[policyId] = { label: policyLabel, parentId: level2Id, depth: 3, children: [] };
+          nodeInfo[level2Id].children.push(policyId);
+          nodeValues[level2Id] = (nodeValues[level2Id] || 0) + 1;
+          l3idx++;
         });
-        // Sum up values for parent (level1) after all children (policies under this level2) are processed
         nodeValues[level1Id] = (nodeValues[level1Id] || 0) + nodeValues[level2Id];
+        l2globalIdx++; // Increment global 2nd layer index
       }
-      // Sum up values for parent (root) after all children (level2s under this level1) are processed
       nodeValues[rootId] = (nodeValues[rootId] || 0) + nodeValues[level1Id];
+      l1idx++;
     }
 
     // After calculating all sums, update the 'values' array with the final calculated values
@@ -359,7 +337,7 @@ const App = () => {
         colors: transformedData.colors, // Use the custom colors array
         line: { // Added line properties for separators
           color: '#333333', // Dark color for lines
-          width: 1 // Thin lines
+          width: 0 // Thin lines
         }
       },
       textfont: {
@@ -372,7 +350,8 @@ const App = () => {
       maxdepth: 2, // Show only 2 layers at once (current level + 1 child layer)
       insidetextfont: {
         size: 10 // Can adjust font size for inner text if needed
-      }
+      },
+      sort: false // Disable sorting of slices
     }
   ];
 
@@ -441,6 +420,66 @@ const App = () => {
       }}>
         Public Finance: Challenges & Policies
       </h1>
+      {/* Breadcrumbs Bar */}
+      <div style={{
+        display: 'flex',
+        gap: '0.5rem',
+        marginBottom: '1.5rem',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#fafbfc', // more white background
+        borderRadius: '0.5rem',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+        width: '100%',
+        height: '3rem',
+        maxWidth: '80rem',
+        marginLeft: 'auto',
+        marginRight: 'auto',
+      }}>
+        {breadcrumbs.map((crumb, idx) => {
+          let bgColor = '#FFFFFF';
+          if (idx <= 3) {
+            const LAYER_COLORS = ['#FF848B','#4D9FD3','#C742B3']
+            bgColor = LAYER_COLORS[idx];
+          }
+          return (
+            <React.Fragment key={idx}>
+              <div
+                style={{
+                  background: bgColor,
+                  color: idx === 0 ? '#222' : '#fff',
+                  padding: '0.4rem 1rem',
+                  borderRadius: '0.5rem',
+                  fontWeight: 600,
+                  fontSize: '1rem',
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.07)',
+                  border: idx === breadcrumbs.length-1 ? '2px solid #222' : 'none',
+                  opacity: idx === breadcrumbs.length-1 ? 1 : 0.85,
+                  transition: 'background 0.2s',
+                  cursor: 'default',
+                  display: 'inline-block',
+                }}
+              >
+                {crumb}
+              </div>
+              {idx < breadcrumbs.length - 1 && (
+                <span style={{
+                  color: '#222', // darker for visibility
+                  fontWeight: 900,
+                  fontSize: '2rem', // larger
+                  margin: '0 0.5rem', // more spacing
+                  userSelect: 'none',
+                  verticalAlign: 'middle',
+                  display: 'inline-block',
+                  lineHeight: 1,
+                }}>{'>'}</span>
+              )}
+            </React.Fragment>
+          );
+        })}
+      </div>
+
       <div style={{
         width: '100%',
         maxWidth: '80rem', // max-w-5xl (approximate, adjust as needed)
